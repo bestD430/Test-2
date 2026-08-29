@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>巴士到站時間預報 (每間公司限顯3條路線)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #222;
+        }
+        .bus-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            background: #fafafa;
+        }
+        /* 各公司專屬樣式 */
+        .item-kmb { border-left: 5px solid #E31837; }
+        .item-ctb { border-left: 5px solid #F3CF00; }
+        .item-nlb { border-left: 5px solid #00778B; }
+
+        .bus-header {
+            flex: 1;
+        }
+        .bus-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .bus-company-tag {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .tag-kmb { background-color: #E31837; }
+        .tag-ctb { background-color: #002C77; color: #F3CF00; }
+        .tag-nlb { background-color: #00778B; }
+
+        .bus-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .bus-dest {
+            font-size: 0.95rem;
+            color: #555;
+        }
+        .eta-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            min-width: 80px;
+        }
+        .eta-badge {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .eta-badge.first {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #222;
+        }
+        .eta-badge.first.arr {
+            color: #E31837; /* 即將到站顯示紅色 */
+        }
+        .loading-text {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>即時巴士到站</h2>
+    <div id="bus-list">
+        <div class="loading-text">載入中...</div>
+    </div>
+</div>
+
+<script>
+    // --- 1. 變數與設定區 ---
+    let currentBuses = [];
+    let cachedRawEtas = {};
+
+    function loadBusConfigs() {
+        // 【請在此處替換回你原本的真實路線設定】
+        // 為了測試，這裡設定了 4 條九巴路線（第 4 條會被自動隱藏）、1 條城巴、1 條嶼巴
+        currentBuses = [
+            { company: 'kmb', route: '1A', dir: 'outbound', stop: '1', origin_name: '中秀茂坪', dest_name: '尖沙咀碼頭', offset: 0 },
+            { company: 'kmb', route: '2', dir: 'outbound', stop: '2', origin_name: '蘇屋', dest_name: '尖沙咀碼頭', offset: 0 },
+            { company: 'kmb', route: '6', dir: 'outbound', stop: '3', origin_name: '荔枝角', dest_name: '尖沙咀碼頭', offset: 0 },
+            { company: 'kmb', route: '9', dir: 'outbound', stop: '4', origin_name: '彩福', dest_name: '尖沙咀東(麼地道)', offset: 0 }, // 這條將不會顯示，因為九巴已達 3 條上限
+            { company: 'ctb', route: '112', dir: 'outbound', stop: '5', origin_name: '北角(百福道)', dest_name: '蘇屋', offset: 0 },
+            { company: 'nlb', route: '37M', dir: 'outbound', stop: '6', origin_name: '迎東邨', dest_name: '東涌站', offset: 0 }
+        ];
+    }
+
+    // --- 2. API 獲取資料函數區 ---
+    // 【請在此處替換回你原本呼叫真實 API 的函數】
+    // 下面為產生模擬資料的測試函數，讓程式可以直接運行示範
+    async function getKMBSeta(route, stop, dir) { return generateMockData(); }
+    async function getCTBETA(route, stop, dir) { return generateMockData(); }
+    async function getNLBETA(route, stop, dir) { return generateMockData(); }
+
+    function generateMockData() {
+        // 隨機產生「即將到站」、10分鐘後、25分鐘後的假資料
+        const now = new Date();
+        return [
+            { eta: new Date(now.getTime() + 1 * 60000).toISOString() }, // 1分鐘內 (即將到站)
+            { eta: new Date(now.getTime() + 12 * 60000).toISOString() }, // 12分鐘
+            { eta: new Date(now.getTime() + 27 * 60000).toISOString() }  // 27分鐘
+        ];
+    }
+
+    // --- 3. 核心渲染邏輯 ---
+    async function fetchBusData() {
+        loadBusConfigs();
+        const busListContainer = document.getElementById('bus-list');
+
+        if (currentBuses.length === 0) {
+            busListContainer.innerHTML = '<div class="loading-text">尚未設定任何路線</div>';
+            return;
+        }
+
+        // 排序：九巴 -> 城巴 -> 嶼巴
+        const companyOrder = { kmb: 1, ctb: 2, nlb: 3 };
+        const sortedBuses = [...currentBuses].sort((a, b) => (companyOrder[a.company] || 99) - (companyOrder[b.company] || 99));
+
+        let newHtml = '';
+        const now = new Date();
+
+        // ★ 新增計數器：追蹤每間公司已顯示的路線數量
+        const companyDisplayCount = { kmb: 0, ctb: 0, nlb: 0 };
+
+        for (let bus of sortedBuses) {
+            // ★ 如果該公司已經顯示了 3 條路線，則跳過這條路線不予處理
+            if (companyDisplayCount[bus.company] >= 3) {
+                continue; 
+            }
+            
+            const busDir = bus.dir || 'outbound';
+            const busOffset = parseFloat(bus.offset || 0);
+            const busKey = `${bus.company}_${bus.route}_${busDir}_${bus.stop}`;
+            let rawEtas = [];
+
+            // 依據公司呼叫對應的 API
+            if (bus.company === 'kmb') {
+                rawEtas = await getKMBSeta(bus.route, bus.stop, busDir);
+            } else if (bus.company === 'ctb') {
+                rawEtas = await getCTBETA(bus.route, bus.stop, busDir);
+            } else if (bus.company === 'nlb') {
+                rawEtas = await getNLBETA(bus.route, bus.stop, busDir);
+            }
+
+            // 快取機制
+            if (rawEtas && rawEtas.length > 0) {
+                cachedRawEtas[busKey] = rawEtas;
+            } else if (cachedRawEtas[busKey]) {
+                rawEtas = cachedRawEtas[busKey];
+            }
+
+            // 計算到站分鐘數
+            let etas = (rawEtas || []).map(item => {
+                if (!item || !item.eta) return null;
+                const etaTime = new Date(item.eta);
+                let totalDiffSeconds = Math.round((etaTime - now) / 1000) + (busOffset * 60);
+
+                if (bus.company === 'kmb') totalDiffSeconds -= 60; // 配合九巴API的時間落差修正
+
+                if (totalDiffSeconds < 0) return null;
+                if (totalDiffSeconds <= 90) return '即將到站';
+
+                const diffMins = Math.round(totalDiffSeconds / 60);
+                return `${diffMins} 分鐘`;
+            }).filter(Boolean).slice(0, 3); // 每條路線最多取3個班次
+
+            // 補齊班次空缺
+            while (etas.length < 3) etas.push('-');
+
+            const isArr = etas[0] === '即將到站';
+            
+            // 建立公司標籤
+            const companyTag = bus.company === 'kmb' ? '<span class="bus-company-tag tag-kmb">九巴/龍運</span>' : 
+                               bus.company === 'ctb' ? '<span class="bus-company-tag tag-ctb">城巴</span>' : 
+                               '<span class="bus-company-tag tag-nlb">嶼巴</span>';
+
+            const itemClass = bus.company === 'kmb' ? 'item-kmb' :
+                              bus.company === 'ctb' ? 'item-ctb' : 'item-nlb';
+
+            // 路線起訖點文字
+            const originText = bus.origin_name ? `<span class="bus-origin-text">${bus.origin_name}</span>` : '';
+            const destText = bus.dest_name ? `<span class="bus-dest-text">${bus.dest_name}</span>` : '';
+            
+            let routeDirectionHtml = '';
+            if (originText && destText) {
+                routeDirectionHtml = `${originText} <span style="font-size: 0.8rem; opacity: 0.7;">➔</span> ${destText}`;
+            } else {
+                routeDirectionHtml = originText || destText;
+            }
+
+            // 組合 HTML 結構
+            newHtml += `
+                <div class="bus-item ${itemClass}">
+                    <div class="bus-header">
+                        <div class="bus-title-group">
+                            ${companyTag}
+                            <div class="bus-name">${bus.route.toUpperCase()}</div>
+                        </div>
+                        <div class="bus-dest">${routeDirectionHtml}</div>
+                    </div>
+                    <div class="eta-group">
+                        <div class="eta-badge first ${isArr ? 'arr' : ''}">${etas[0]}</div>
+                        <div class="eta-badge">${etas[1]}</div>
+                        <div class="eta-badge">${etas[2]}</div>
+                    </div>
+                </div>
+            `;
+            
+            // ★ 成功渲染一條路線後，該公司的計數器 +1
+            companyDisplayCount[bus.company]++;
+        }
+        
+        // 更新畫面
+        busListContainer.innerHTML = newHtml;
+    }
+
+    // 網頁載入後馬上執行一次，並設定每 30 秒自動更新
+    window.onload = () => {
+        fetchBusData();
+        setInterval(fetchBusData, 30000);
+    };
+
+</script>
+</body>
+</html>
