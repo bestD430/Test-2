@@ -139,7 +139,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             border-bottom: 1px dashed #475569;
             padding-bottom: 6px;
         }
@@ -160,6 +160,24 @@
             padding: 2px 4px;
         }
         .weather-toggle-btn:hover { color: #f8fafc; }
+
+        /* 天氣分區欄內的警告 Icon 容器 */
+        .district-warning-container {
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 6px;
+            padding: 4px 6px;
+            background: rgba(225, 29, 72, 0.1);
+            border-radius: 6px;
+            border: 1px dashed rgba(244, 63, 94, 0.3);
+        }
+        .district-warning-container.active { display: flex; }
+        .district-warning-icon {
+            height: 22px;
+            width: auto;
+            object-fit: contain;
+        }
 
         .weather-settings-menu {
             display: none;
@@ -506,6 +524,9 @@
                         <button class="menu-save-btn" onclick="saveWeatherConfig(1)">保存</button>
                     </div>
 
+                    <!-- 天氣警告 Icon 欄位 (分區1) -->
+                    <div class="district-warning-container" id="d1-warning-box"></div>
+
                     <div class="day-weather">
                         <div class="day-label">今天 (即時)</div>
                         <div class="temp-row">
@@ -538,6 +559,9 @@
                         <button class="menu-save-btn" onclick="saveWeatherConfig(2)">保存</button>
                     </div>
 
+                    <!-- 天氣警告 Icon 欄位 (分區2) -->
+                    <div class="district-warning-container" id="d2-warning-box"></div>
+
                     <div class="day-weather">
                         <div class="day-label">今天 (即時)</div>
                         <div class="temp-row">
@@ -562,7 +586,7 @@
                 <div class="panel-title">
                     <span>🚗 路線交通狀況</span>
                     <div class="traffic-header-actions">
-                        <button class="settings-btn" id="toggle-map-btn" onclick="toggleMapVisibility()">🗺️ 隱藏地圖</button>
+                        <button class="settings-btn" id="toggle-map-btn" onclick="toggleMapVisibility()">🗺️ 顯示地圖</button>
                         <button class="settings-btn" onclick="openRouteModal()">⚙️ 路線設定</button>
                     </div>
                 </div>
@@ -581,7 +605,7 @@
                     </div>
                 </div>
 
-                <div class="map-container" id="map-container">
+                <div class="map-container hidden" id="map-container">
                     <iframe id="traffic-map-iframe" class="map-iframe" loading="lazy" allowfullscreen src=""></iframe>
                 </div>
             </div>
@@ -654,7 +678,10 @@
             destination: "滿東邨"
         };
 
-        let isMapHidden = localStorage.getItem('traffic_map_hidden') === 'true';
+        // 地圖預設隱藏 (若使用者未設置過 localStorage 則為 true)
+        let isMapHidden = localStorage.getItem('traffic_map_hidden') !== null 
+            ? localStorage.getItem('traffic_map_hidden') === 'true' 
+            : true;
 
         let kmbStopsCacheMap = null;
         const ctbStopsCache = {};
@@ -886,12 +913,33 @@
 
                 const warningBox = document.getElementById('weather-warning-box');
                 const activeWarnings = Object.values(warnData || {}).map(w => w.name).filter(Boolean);
+                const warningCodes = Object.values(warnData || {}).map(w => w.code).filter(Boolean);
 
                 if (activeWarnings.length > 0) {
                     document.getElementById('warning-list').innerHTML = activeWarnings.map(w => `<span class="warning-badge">${w}</span>`).join('');
                     warningBox.classList.add('active');
                 } else {
                     warningBox.classList.remove('active');
+                }
+
+                // 於天氣分區欄內顯示對應警告圖示
+                const d1WarnBox = document.getElementById('d1-warning-box');
+                const d2WarnBox = document.getElementById('d2-warning-box');
+
+                if (warningCodes.length > 0) {
+                    const warnIconsHtml = warningCodes.map(code => 
+                        `<img class="district-warning-icon" src="https://www.hko.gov.hk/images/HKOWxIconOutline/warn${code}.png" alt="warning icon" title="警告圖示">`
+                    ).join('');
+                    
+                    d1WarnBox.innerHTML = warnIconsHtml;
+                    d2WarnBox.innerHTML = warnIconsHtml;
+                    d1WarnBox.classList.add('active');
+                    d2WarnBox.classList.add('active');
+                } else {
+                    d1WarnBox.classList.remove('active');
+                    d2WarnBox.classList.remove('active');
+                    d1WarnBox.innerHTML = '';
+                    d2WarnBox.innerHTML = '';
                 }
 
                 const getIconUrl = (code) => `https://www.hko.gov.hk/images/HKOWxIconOutline/pic${code}.png`;
@@ -1113,7 +1161,6 @@
             if (!item) return;
             const dirSelect = item.querySelector('.bus-dir');
             item.dataset.currentDir = dirSelect.value;
-            // 更新目標目的地名稱並載入該方向的車站
             const selectedOpt = dirSelect.options[dirSelect.selectedIndex];
             const destInput = item.querySelector('.bus-dest');
             if (selectedOpt && selectedOpt.text) {
