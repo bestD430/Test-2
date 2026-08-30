@@ -258,7 +258,7 @@
         .bus-item.item-ctb { background: #eab308; color: #000000; }
         .bus-item.item-nlb { background: #15803d; color: #ffffff; }
 
-        .bus-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .bus-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .bus-title-group { display: flex; align-items: center; gap: 8px; }
         .bus-company-tag {
             font-size: 0.75rem;
@@ -275,10 +275,13 @@
         .item-ctb .bus-name { color: #000000; }
         .item-nlb .bus-name { color: #ffffff; }
 
+        .bus-info-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
         .bus-dest { font-size: 0.85rem; font-weight: 500; }
-        .item-kmb .bus-dest { color: #fecdd3; }
-        .item-ctb .bus-dest { color: #1e293b; }
-        .item-nlb .bus-dest { color: #dcfce7; }
+        .bus-stop-name { font-size: 0.75rem; opacity: 0.85; font-weight: 400; }
+
+        .item-kmb .bus-dest, .item-kmb .bus-stop-name { color: #fecdd3; }
+        .item-ctb .bus-dest, .item-ctb .bus-stop-name { color: #1e293b; }
+        .item-nlb .bus-dest, .item-nlb .bus-stop-name { color: #dcfce7; }
 
         .eta-group { display: flex; gap: 8px; align-items: center; }
         .eta-badge {
@@ -326,7 +329,7 @@
             background: #1e293b;
             border-radius: 16px;
             width: 90%;
-            max-width: 650px;
+            max-width: 700px;
             max-height: 85vh;
             padding: 16px;
             border: 1px solid #475569;
@@ -492,8 +495,9 @@
             </div>
             <div class="hint-text">
                 💡 <b>使用說明</b>：<br>
-                1. 輸入「路線」並選擇去/返程後，系統會<b>自動填入終點站名稱</b>，車站輸入框亦會<b>顯示下拉建議選項</b>。<br>
-                2. 您可以直接從下拉選單點選，或手動修改目的地及輸入<b>「車站名稱」</b>或<b>「車站代碼」</b>。
+                1. 輸入「路線」與選擇去/返程，可從下拉建議選單點選<b>「車站代碼/建議車站」</b>。<br>
+                2. 您可以在<b>「手動車站顯示名稱」</b>填寫您想顯示在畫面的自訂站名（例如：屋企門口、逸東邨）。<br>
+                3. 若「手動車站顯示名稱」留空，系統將會預設顯示車站代碼/名稱。
             </div>
             <div class="config-list" id="config-list"></div>
             <div class="modal-footer">
@@ -551,16 +555,16 @@
         }
 
         const defaultBuses = [
-            { company: "kmb", route: "E36A", dir: "inbound", stop: "TC188", dest_name: "往 元朗", offset: 0 },
-            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", dest_name: "往 機場/東涌", offset: 0 },
-            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", dest_name: "往 昂坪", offset: 0 }
+            { company: "kmb", route: "E36A", dir: "inbound", stop: "TC188", custom_stop_name: "滿東邨", dest_name: "往 元朗", offset: 0 },
+            { company: "ctb", route: "E33", dir: "outbound", stop: "東涌纜車站", custom_stop_name: "東涌纜車站", dest_name: "往 機場/東涌", offset: 0 },
+            { company: "nlb", route: "23", dir: "outbound", stop: "昂坪", custom_stop_name: "昂坪市集", dest_name: "往 昂坪", offset: 0 }
         ];
 
         let currentBuses = [];
         let cachedRawEtas = {};
 
         function loadBusConfigs() {
-            const saved = localStorage.getItem('user_bus_configs_v6');
+            const saved = localStorage.getItem('user_bus_configs_v7');
             if (saved) {
                 try { currentBuses = JSON.parse(saved); } catch(e) { currentBuses = defaultBuses; }
             } else {
@@ -813,6 +817,9 @@
                 const itemClass = bus.company === 'kmb' ? 'item-kmb' :
                                   bus.company === 'ctb' ? 'item-ctb' : 'item-nlb';
 
+                // 優先使用自訂車站名稱，若無則顯示 API 之車站代碼/名稱
+                const displayStopName = bus.custom_stop_name ? bus.custom_stop_name : bus.stop;
+
                 newHtml += `
                     <div class="bus-item ${itemClass}">
                         <div class="bus-header">
@@ -820,7 +827,10 @@
                                 ${companyTag}
                                 <div class="bus-name">${bus.route.toUpperCase()}</div>
                             </div>
-                            <div class="bus-dest">${bus.dest_name}</div>
+                            <div class="bus-info-right">
+                                <div class="bus-dest">${bus.dest_name}</div>
+                                <div class="bus-stop-name">📍 ${displayStopName}</div>
+                            </div>
                         </div>
                         <div class="eta-group">
                             <div class="eta-badge first ${isArr ? 'arr' : ''}">${etas[0]}</div>
@@ -865,6 +875,7 @@
             currentBuses.forEach((bus, index) => {
                 const busDir = bus.dir || 'outbound';
                 const busOffset = bus.offset !== undefined ? bus.offset : 0;
+                const customStop = bus.custom_stop_name || '';
 
                 const itemHtml = `
                     <div class="config-item" data-index="${index}">
@@ -882,9 +893,12 @@
                             <button class="delete-btn" onclick="deleteBusConfig(${index})">刪除</button>
                         </div>
                         <div class="config-row">
-                            <input type="text" class="config-input bus-stop" list="stop-list-${index}" placeholder="搜尋或選擇車站 / 輸入代碼" value="${bus.stop}">
+                            <input type="text" class="config-input bus-stop" list="stop-list-${index}" placeholder="車站代碼 / 選單點選" value="${bus.stop}">
                             <datalist id="stop-list-${index}"></datalist>
-                            <input type="text" class="config-input bus-dest" placeholder="顯示目的地 (如 往 元朗)" value="${bus.dest_name}">
+                            <input type="text" class="config-input bus-custom-stop" placeholder="手動車站顯示名稱 (例: 逸東邨)" value="${customStop}">
+                        </div>
+                        <div class="config-row">
+                            <input type="text" class="config-input bus-dest" placeholder="顯示目的地 (例: 往 元朗)" value="${bus.dest_name}">
                             <select class="config-select bus-offset" title="時間微調">
                                 ${generateOffsetOptions(busOffset)}
                             </select>
@@ -991,7 +1005,7 @@
         }
 
         function addNewBusConfig() {
-            currentBuses.push({ company: "kmb", route: "", dir: "outbound", stop: "", dest_name: "", offset: 0 });
+            currentBuses.push({ company: "kmb", route: "", dir: "outbound", stop: "", custom_stop_name: "", dest_name: "", offset: 0 });
             renderSettingsList();
         }
 
@@ -1009,16 +1023,17 @@
                 const route = item.querySelector('.bus-route').value.trim();
                 const dir = item.querySelector('.bus-dir').value;
                 const stop = item.querySelector('.bus-stop').value.trim();
+                const custom_stop_name = item.querySelector('.bus-custom-stop').value.trim();
                 const dest_name = item.querySelector('.bus-dest').value.trim();
                 const offset = parseFloat(item.querySelector('.bus-offset').value);
 
                 if (route && stop) {
-                    newConfigs.push({ company, route, dir, stop, dest_name, offset });
+                    newConfigs.push({ company, route, dir, stop, custom_stop_name, dest_name, offset });
                 }
             });
 
             currentBuses = newConfigs;
-            localStorage.setItem('user_bus_configs_v6', JSON.stringify(currentBuses));
+            localStorage.setItem('user_bus_configs_v7', JSON.stringify(currentBuses));
             
             closeSettings();
             fetchBusData();
