@@ -402,12 +402,35 @@
         .modal-title { font-size: 1.1rem; font-weight: bold; color: #38bdf8; }
         .modal-close { background: none; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer; padding: 4px; }
 
+        /* 新增：黑屏設定區域樣式 */
+        .night-time-section {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .night-time-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+        .night-time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
         .config-list { 
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
             overflow-y: auto; 
-            max-height: 50vh; 
+            max-height: 45vh; 
             -webkit-overflow-scrolling: touch;
         }
         .config-item {
@@ -559,9 +582,19 @@
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">⚙️ 設定路線及車站</div>
+                <div class="modal-title">⚙️ 系統及路線設定</div>
                 <button class="modal-close" onclick="closeSettings()">&times;</button>
             </div>
+            
+            <!-- 新增：黑屏開始/結束時間設定區 -->
+            <div class="night-time-section">
+                <div class="night-time-title">🌙 夜間黑屏時間設定</div>
+                <div class="night-time-inputs">
+                    <label>開始：<input type="time" id="night-start-time" class="config-input" style="flex:none; width: 120px;" value="20:00"></label>
+                    <label>結束：<input type="time" id="night-end-time" class="config-input" style="flex:none; width: 120px;" value="05:00"></label>
+                </div>
+            </div>
+
             <div class="hint-text">
                 💡 當某路線無有效班次時，將顯示「暫無班次」。
             </div>
@@ -648,14 +681,32 @@
             var nightDateEl = document.getElementById('night-date');
             if (nightDateEl) nightDateEl.innerText = dateStr;
 
-            checkNightMode(hours);
+            checkNightMode(now);
         }
 
-        function checkNightMode(hours) {
+        // 支援可自訂黑屏時間區間的檢查函數
+        function checkNightMode(now) {
             var nightScreen = document.getElementById('night-screen');
             if (!nightScreen) return;
 
-            var isNightTime = (hours >= 20 || hours < 5);
+            var startTime = localStorage.getItem('night_mode_start') || "20:00";
+            var endTime = localStorage.getItem('night_mode_end') || "05:00";
+
+            var startParts = startTime.split(':').map(Number);
+            var endParts = endTime.split(':').map(Number);
+
+            var currentMin = now.getHours() * 60 + now.getMinutes();
+            var startMin = startParts[0] * 60 + startParts[1];
+            var endMin = endParts[0] * 60 + endParts[1];
+
+            var isNightTime = false;
+            if (startMin <= endMin) {
+                // 同一天內的時段 (例如 01:00 至 06:00)
+                isNightTime = (currentMin >= startMin && currentMin < endMin);
+            } else {
+                // 跨夜時段 (例如 20:00 至 05:00)
+                isNightTime = (currentMin >= startMin || currentMin < endMin);
+            }
 
             if (isNightTime) {
                 if (!isManuallyWoken) {
@@ -673,23 +724,19 @@
 
         function wakeUpNightScreen() {
             var now = new Date();
-            var hours = now.getHours();
-            var isNightTime = (hours >= 20 || hours < 5);
+            var nightScreen = document.getElementById('night-screen');
 
-            if (isNightTime) {
-                isManuallyWoken = true;
-                var nightScreen = document.getElementById('night-screen');
-                if (nightScreen) nightScreen.classList.remove('active');
+            isManuallyWoken = true;
+            if (nightScreen) nightScreen.classList.remove('active');
 
-                if (nightWakeTimer) {
-                    clearTimeout(nightWakeTimer);
-                }
-
-                nightWakeTimer = setTimeout(function() {
-                    isManuallyWoken = false;
-                    checkNightMode(new Date().getHours());
-                }, 30000);
+            if (nightWakeTimer) {
+                clearTimeout(nightWakeTimer);
             }
+
+            nightWakeTimer = setTimeout(function() {
+                isManuallyWoken = false;
+                checkNightMode(new Date());
+            }, 30000);
         }
 
         setInterval(updateClock, 1000);
@@ -947,7 +994,6 @@
             var lineUpper = line.toUpperCase();
             var staUpper = station.toUpperCase();
 
-            // 處理開放數據格式相容性（東涌綫 TCL、南港島綫 SIL、港島綫 ISL 等）
             var url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + lineUpper + '&sta=' + staUpper;
             fetch(url)
                 .then(function(res) { return res.json(); })
@@ -959,14 +1005,12 @@
                         if (trainData) {
                             var targetDir = dir || 'UP';
                             var trains = trainData[targetDir] || [];
-                            // 若指定方向無資料，自動嘗試備用方向（處理單向或特例路線）
                             if (trains.length === 0) {
                                 var altDir = (targetDir === 'UP') ? 'DN' : 'UP';
                                 trains = trainData[altDir] || [];
                             }
                             for (var i = 0; i < trains.length; i++) {
                                 var tItem = trains[i];
-                                // 相容 API 返回的 time 或 ttnt (Time To Next Train) 格式
                                 if (tItem.time) {
                                     var tStr = tItem.time.replace(/-/g, '/');
                                     list.push({ eta: tStr });
@@ -1115,6 +1159,13 @@
 
         function openSettings() {
             loadBusConfigs();
+            
+            // 載入已儲存的黑屏時間設定
+            var startEl = document.getElementById('night-start-time');
+            var endEl = document.getElementById('night-end-time');
+            if (startEl) startEl.value = localStorage.getItem('night_mode_start') || "20:00";
+            if (endEl) endEl.value = localStorage.getItem('night_mode_end') || "05:00";
+
             renderSettingsList();
             var modal = document.getElementById('settings-modal');
             if (modal) modal.classList.add('active');
@@ -1497,6 +1548,12 @@
         }
 
         function saveBusConfig() {
+            // 保存夜間黑屏時間設定
+            var startTime = document.getElementById('night-start-time').value;
+            var endTime = document.getElementById('night-end-time').value;
+            if (startTime) localStorage.setItem('night_mode_start', startTime);
+            if (endTime) localStorage.setItem('night_mode_end', endTime);
+
             var items = document.querySelectorAll('.config-item');
             var newConfigs = [];
 
@@ -1518,6 +1575,9 @@
             currentBuses = newConfigs;
             localStorage.setItem('user_bus_configs_v12', JSON.stringify(currentBuses));
             closeSettings();
+            
+            // 即時檢查並更新一次夜間模式狀態與到站資料
+            checkNightMode(new Date());
             fetchBusData();
         }
     </script>
