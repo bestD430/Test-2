@@ -63,7 +63,7 @@
             align-items: center;
         }
 
-        /* 包含 上午/下午 與 秒數 的右側容器（強制定為垂直排列） */
+        /* 包含 上午/下午 與 秒數 的右側容器 */
         .clock-sub-box {
             display: inline-flex !important;
             flex-direction: column !important;
@@ -73,12 +73,14 @@
             line-height: 1.1;
         }
 
-        /* 上午/下午 顯示於秒數上方，字體 21px */
+        /* 強制 上午/下午 橫寫顯示 */
         .clock-ampm {
             font-size: 21px;
             font-weight: 600;
             line-height: 1.1;
             display: block;
+            writing-mode: horizontal-tb !important;
+            white-space: nowrap !important;
         }
 
         /* 秒數 21px */
@@ -578,9 +580,9 @@
 
             var m = String(minutes); if (m.length < 2) m = '0' + m;
             var s = String(seconds); if (s.length < 2) s = '0' + s;
-            var h = String(h12);     if (h.length < 2) h = '0' + h;
+            var h = String(h12);     // 不在前面補 0，讓 1~9 時維持單數字顯示
 
-            // 組裝 HTML：將 上午/下午 置於秒數上方，兩者字體均設為 21px
+            // 組裝 HTML：將 上午/下午 置於秒數上方（強制橫向顯示）
             var clockHtml = h + ':' + m + 
                 '<div class="clock-sub-box">' +
                     '<span class="clock-ampm">' + ampm + '</span>' +
