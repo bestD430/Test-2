@@ -280,11 +280,14 @@
         .bus-origin-text { font-size: 1.15rem; font-weight: 800; color: #ffffff; }
         .bus-dest-text { font-size: 0.85rem; font-weight: 500; opacity: 0.95; }
 
-        /* ETA 佈局調整 */
+        /* ETA 佈局調整：寬度減小40% (60% 寬度) */
         .eta-group { 
             display: flex; 
             gap: 8px; 
             align-items: stretch; 
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .eta-next-group {
@@ -308,6 +311,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            white-space: nowrap;
         }
         
         .eta-badge.first {
