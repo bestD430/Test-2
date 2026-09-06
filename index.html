@@ -245,7 +245,7 @@
         .card-ctb .bus-dest { color: #1e293b; text-shadow: none; }
         .card-ctb .bus-origin-text { color: #000000; }
 
-        .bus-header { display: flex; justify-content: space-between; align-items: baseline; }
+        .bus-header { display: flex; justify-content: space-between; align-items: center; }
         .bus-title-group { display: flex; align-items: center; gap: 8px; }
         
         .bus-company-tag { 
@@ -264,7 +264,7 @@
         .card-lwb .bus-company-tag { color: #ffffff; background: #f37021; border-color: #ffffff; }
         .card-ctb .bus-company-tag { color: #000000; background: #ffcc00; border-color: #000000; }
 
-        /* 路線號碼字體大小增大 70% (2.835rem -> 4.82rem) */
+        /* 路線號碼字體大小 (4.82rem) */
         .bus-name { font-size: 4.82rem; font-weight: 700; letter-spacing: 2px; line-height: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
         .bus-dest { 
@@ -533,7 +533,7 @@
             .bus-item { padding: 20px 24px; border-radius: 16px; gap: 16px; }
             .bus-company-tag { font-size: 1rem; padding: 4px 10px; border-radius: 6px; }
             
-            /* 桌面版路線號碼字體大小增大 70% (3.888rem -> 6.61rem) */
+            /* 桌面版路線號碼字體大小 (6.61rem) */
             .bus-name { font-size: 6.61rem; letter-spacing: 3px; }
             
             .bus-dest { gap: 8px; }
@@ -1116,9 +1116,10 @@
                         return 'eta-green';
                     }
 
+                    /* 調整：巴士公司標籤 (companyTag) 移至路線號碼 (bus-name) 右側 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header">' +
-                            '<div class="bus-title-group">' + companyTag + '<div class="bus-name">' + displayRoute + '</div></div>' +
+                            '<div class="bus-title-group"><div class="bus-name">' + displayRoute + '</div>' + companyTag + '</div>' +
                             '<div class="bus-dest">' + routeDirectionHtml + '</div>' +
                         '</div>' +
                         '<div class="eta-group">' +
