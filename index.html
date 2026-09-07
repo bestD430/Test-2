@@ -347,6 +347,7 @@
             width: 100%;
         }
 
+        /* 增加字體長度 10%: 0.88rem -> 0.97rem */
         .eta-badge {
             flex: 1;
             background: rgba(15, 23, 42, 0.85);
@@ -354,7 +355,7 @@
             border-radius: 6px;
             padding: 4px 0.5px;
             text-align: center;
-            font-size: 0.88rem;
+            font-size: 0.97rem;
             font-weight: bold;
             color: #e2e8f0;
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -367,10 +368,11 @@
             transform-origin: center center;
         }
         
+        /* 增加字體長度 10%: 1.7rem -> 1.87rem */
         .eta-badge.first {
             width: 100%;
             background: rgba(15, 23, 42, 0.85);
-            font-size: 1.7rem;
+            font-size: 1.87rem;
             font-weight: 900;
             padding: 6px 1px;
         }
@@ -379,15 +381,30 @@
             color: #34d399;
             border-color: rgba(52, 211, 153, 0.4);
         }
+        
+        /* 紅色字體採用九巴紅 (#d8121a) */
         .eta-badge.eta-red {
-            color: #f87171;
-            border-color: rgba(248, 113, 113, 0.4);
+            color: #d8121a;
+            border-color: rgba(216, 18, 26, 0.6);
         }
 
+        /* 紅色（九巴紅 #d8121a）與黃色（城巴黃 #ffcc00）閃爍 (5分鐘或以下) */
+        @keyframes flashRedYellow {
+            0%, 49% {
+                color: #d8121a;
+                border-color: rgba(216, 18, 26, 0.8);
+            }
+            50%, 100% {
+                color: #ffcc00;
+                border-color: rgba(255, 204, 0, 0.8);
+            }
+        }
+
+        /* 紅色（九巴紅 #d8121a）與綠色（#34d399）閃爍 (6至10分鐘) */
         @keyframes flashRedGreen {
             0%, 49% {
-                color: #f87171;
-                border-color: rgba(248, 113, 113, 0.8);
+                color: #d8121a;
+                border-color: rgba(216, 18, 26, 0.8);
             }
             50%, 100% {
                 color: #34d399;
@@ -396,6 +413,10 @@
         }
 
         .eta-badge.eta-flash {
+            animation: flashRedYellow 1s infinite;
+        }
+
+        .eta-badge.eta-flash-green {
             animation: flashRedGreen 1s infinite;
         }
 
@@ -596,8 +617,9 @@
 
             .eta-group { gap: 5px; width: 32%; }
             .eta-next-group { gap: 6px; }
-            .eta-badge { font-size: 1.15rem; padding: 6px; border-radius: 8px; }
-            .eta-badge.first { font-size: 2.5rem; padding: 6px; border-radius: 10px; }
+            /* 電腦版字體亦增加 10%: 1.15rem -> 1.27rem ; 2.5rem -> 2.75rem */
+            .eta-badge { font-size: 1.27rem; padding: 6px; border-radius: 8px; }
+            .eta-badge.first { font-size: 2.75rem; padding: 6px; border-radius: 10px; }
             
             .modal-content { max-width: 800px; padding: 24px; gap: 16px; }
             .modal-title { font-size: 1.4rem; }
@@ -1173,10 +1195,14 @@
                     
                     var displayRoute = bus.route.toUpperCase();
 
+                    // 到站時間顯示邏輯：
+                    // <= 5 分鐘：紅黃交替閃爍 (eta-flash)
+                    // 6 - 10 分鐘：紅綠交替閃爍 (eta-flash-green)
+                    // > 10 分鐘：靜態綠色 (eta-green)
                     function getEtaClass(etaObj) {
                         if (etaObj.mins < 0) return '';
-                        if (etaObj.mins <= 5) return 'eta-red';
-                        if (etaObj.mins <= 10) return 'eta-flash';
+                        if (etaObj.mins <= 5) return 'eta-flash';
+                        if (etaObj.mins <= 10) return 'eta-flash-green';
                         return 'eta-green';
                     }
 
