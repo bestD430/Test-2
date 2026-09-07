@@ -226,9 +226,10 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* 修改：卡片高度減少 10% (上下內邊距從 10px 縮減至 5px) */
         .bus-item {
             border-radius: 12px;
-            padding: 10px 12px;
+            padding: 5px 12px;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -259,7 +260,7 @@
         
         .bus-company-tag { 
             font-size: 0.85rem; 
-            padding: 3px 8px; 
+            padding: 2px 6px; 
             border-radius: 6px; 
             font-weight: bold; 
             background: rgba(15, 23, 42, 0.85);
@@ -273,7 +274,8 @@
         .card-lwb .bus-company-tag { color: #ffffff; background: #f37021; border-color: #ffffff; }
         .card-ctb .bus-company-tag { color: #000000; background: #ffcc00; border-color: #000000; }
 
-        .bus-name { font-size: 4.82rem; font-weight: 700; letter-spacing: 2px; line-height: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+        /* 修改：適度縮小路線字體，減少整體高度 */
+        .bus-name { font-size: 4.3rem; font-weight: 700; letter-spacing: 2px; line-height: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
         .bus-dest { 
             font-size: 0.85rem; 
@@ -285,33 +287,25 @@
             gap: 1px;
             color: #f1f5f9;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            margin-top: 2px;
-        }
-        .bus-route-arrow {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            line-height: 1;
-            margin: 1px 0;
+            margin-top: 1px;
         }
         .bus-origin-text { font-size: 1.15rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
         .bus-dest-text { font-size: 0.85rem; font-weight: 500; opacity: 0.95; line-height: 1.1; }
 
-        /* 修改：改為垂直佈局 (column) */
         .eta-group { 
             display: flex; 
             flex-direction: column;
-            gap: 6px; 
+            gap: 4px; 
             align-items: stretch; 
             width: 45%;
             margin-left: auto;
             margin-right: 0;
         }
 
-        /* 修改：第二和第三班次水平並排在下方 */
         .eta-next-group {
             display: flex;
             flex-direction: row;
-            gap: 6px;
+            gap: 4px;
             width: 100%;
         }
 
@@ -320,7 +314,7 @@
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(4px);
             border-radius: 6px;
-            padding: 4px;
+            padding: 3px;
             text-align: center;
             font-size: 0.85rem;
             font-weight: bold;
@@ -332,13 +326,12 @@
             white-space: nowrap;
         }
         
-        /* 修改：首班顯示在最上方，佔據獨立一行 */
         .eta-badge.first {
             width: 100%;
             background: rgba(15, 23, 42, 0.85);
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 900;
-            padding: 6px 4px;
+            padding: 4px;
         }
 
         .eta-badge.eta-green {
@@ -550,20 +543,20 @@
             .settings-btn { font-size: 1.1rem; padding: 10px 20px; }
             .bus-list { gap: 16px; padding-right: 8px; }
             
-            .bus-item { padding: 18px 24px; border-radius: 16px; gap: 14px; }
-            .bus-company-tag { font-size: 1rem; padding: 4px 10px; border-radius: 6px; }
+            /* 修改：大螢幕下卡片高度減少 10% (內邊距從 18px 24px 縮減至 10px 20px) */
+            .bus-item { padding: 10px 20px; border-radius: 16px; gap: 14px; }
+            .bus-company-tag { font-size: 1rem; padding: 3px 8px; border-radius: 6px; }
             
-            .bus-name { font-size: 6.61rem; letter-spacing: 3px; }
+            .bus-name { font-size: 5.9rem; letter-spacing: 3px; }
             
-            .bus-dest { margin-top: 4px; gap: 2px; }
+            .bus-dest { margin-top: 2px; gap: 2px; }
             .bus-origin-text { font-size: 1.8rem; }
             .bus-dest-text { font-size: 1.3rem; }
-            .bus-route-arrow { font-size: 1rem; }
 
-            .eta-group { gap: 8px; width: 40%; }
-            .eta-next-group { gap: 8px; }
-            .eta-badge { font-size: 1.1rem; padding: 6px; border-radius: 8px; }
-            .eta-badge.first { font-size: 2.2rem; padding: 8px; border-radius: 12px; }
+            .eta-group { gap: 6px; width: 40%; }
+            .eta-next-group { gap: 6px; }
+            .eta-badge { font-size: 1.1rem; padding: 5px; border-radius: 8px; }
+            .eta-badge.first { font-size: 2rem; padding: 6px; border-radius: 12px; }
             .modal-content { max-width: 800px; padding: 24px; gap: 16px; }
             .modal-title { font-size: 1.4rem; }
             .modal-close { font-size: 2.2rem; }
@@ -1127,12 +1120,8 @@
                     var originText = bus.origin_name ? '<span class="bus-origin-text">' + bus.origin_name + '</span>' : '';
                     var destText = bus.dest_name ? '<span class="bus-dest-text">' + bus.dest_name + '</span>' : '';
                     
-                    var routeDirectionHtml = '';
-                    if (originText && destText) {
-                        routeDirectionHtml = originText + '<span class="bus-route-arrow">↓</span>' + destText;
-                    } else {
-                        routeDirectionHtml = originText || destText;
-                    }
+                    /* 修改：取消箭頭符號，直接呈現上下排列 */
+                    var routeDirectionHtml = originText + destText;
 
                     var displayRoute = bus.route.toUpperCase();
 
@@ -1143,7 +1132,6 @@
                         return 'eta-green';
                     }
 
-                    /* 修改：調整 ETA 結構，首班在上，二三班在下並排 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header">' +
                             '<div class="bus-title-group">' +
