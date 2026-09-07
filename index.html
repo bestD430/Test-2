@@ -226,10 +226,9 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        /* 修改：卡片高度再減少 15% (padding 從 5px 12px 縮減至 3px 10px) */
         .bus-item {
             border-radius: 10px;
-            padding: 3px 10px;
+            padding: 6px 10px;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -248,16 +247,16 @@
         .card-ctb .bus-dest { color: #1e293b; text-shadow: none; }
         .card-ctb .bus-origin-text { color: #000000; }
 
+        /* 路線號與下方站名左對齊 */
         .bus-header { 
             display: flex; 
             flex-direction: column; 
             align-items: flex-start; 
             justify-content: center;
-            gap: 1px;
+            gap: 2px;
             flex: 1;
         }
         
-        /* 公司標籤置於路線號碼左邊 */
         .bus-title-group { 
             display: flex; 
             align-items: center; 
@@ -265,25 +264,30 @@
         }
         
         .bus-company-tag { 
-            font-size: 0.8rem; 
-            padding: 1px 5px; 
-            border-radius: 5px; 
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 0.75rem; 
+            padding: 3px 2px; 
+            border-radius: 4px; 
             font-weight: bold; 
             background: rgba(15, 23, 42, 0.85);
             border: 1.5px solid #ffffff;
             color: #ffffff;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            white-space: nowrap;
+            letter-spacing: 1px;
+            line-height: 1;
         }
 
         .card-kmb .bus-company-tag { color: #ffffff; background: #d8121a; border-color: #ffffff; }
         .card-lwb .bus-company-tag { color: #ffffff; background: #f37021; border-color: #ffffff; }
         .card-ctb .bus-company-tag { color: #000000; background: #ffcc00; border-color: #000000; }
 
-        /* 修改：縮減路線字體與行高，以降低卡片整體高度 */
         .bus-name { font-size: 3.8rem; font-weight: 700; letter-spacing: 1px; line-height: 0.95; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
+        /* 路線號正下方、完全靠左拍齊 */
         .bus-dest { 
             font-size: 0.8rem; 
             font-weight: 500; 
@@ -291,13 +295,15 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 0px;
+            gap: 1px;
             color: #f1f5f9;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            margin-top: 0px;
+            margin-top: 2px;
+            line-height: 1.2;
+            width: 100%;
         }
-        .bus-origin-text { font-size: 1.05rem; font-weight: 800; color: #ffffff; line-height: 1; }
-        .bus-dest-text { font-size: 0.8rem; font-weight: 500; opacity: 0.95; line-height: 1; }
+        .bus-origin-text { font-size: 1.05rem; font-weight: 800; color: #ffffff; line-height: 1.2; text-align: left; }
+        .bus-dest-text { font-size: 0.8rem; font-weight: 500; opacity: 0.95; line-height: 1.2; text-align: left; }
 
         .eta-group { 
             display: flex; 
@@ -333,7 +339,6 @@
             white-space: nowrap;
         }
         
-        /* 修改：首班到站時間字體加大 20% (從 1.35rem 增大至 1.62rem) */
         .eta-badge.first {
             width: 100%;
             background: rgba(15, 23, 42, 0.85);
@@ -551,20 +556,18 @@
             .settings-btn { font-size: 1.1rem; padding: 10px 20px; }
             .bus-list { gap: 12px; padding-right: 8px; }
             
-            /* 修改：大螢幕卡片高度減少 15% (padding 從 10px 20px 縮減至 6px 16px) */
-            .bus-item { padding: 6px 16px; border-radius: 14px; gap: 12px; }
-            .bus-company-tag { font-size: 0.95rem; padding: 2px 7px; border-radius: 6px; }
+            .bus-item { padding: 8px 16px; border-radius: 14px; gap: 12px; }
+            .bus-company-tag { font-size: 0.85rem; padding: 4px 3px; border-radius: 5px; }
             
             .bus-name { font-size: 5rem; letter-spacing: 2px; }
             
-            .bus-dest { margin-top: 0px; gap: 1px; }
-            .bus-origin-text { font-size: 1.6rem; }
-            .bus-dest-text { font-size: 1.15rem; }
+            .bus-dest { margin-top: 2px; gap: 2px; line-height: 1.2; }
+            .bus-origin-text { font-size: 1.6rem; line-height: 1.2; }
+            .bus-dest-text { font-size: 1.15rem; line-height: 1.2; }
 
             .eta-group { gap: 5px; width: 40%; }
             .eta-next-group { gap: 6px; }
             .eta-badge { font-size: 1.05rem; padding: 4px; border-radius: 8px; }
-            /* 大螢幕首班到站字體加大 20% (從 2rem 增至 2.4rem) */
             .eta-badge.first { font-size: 2.4rem; padding: 4px; border-radius: 10px; }
             
             .modal-content { max-width: 800px; padding: 24px; gap: 16px; }
@@ -1140,7 +1143,6 @@
                         return 'eta-green';
                     }
 
-                    /* 修改：將 companyTag 置於 bus-name 的左側 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header">' +
                             '<div class="bus-title-group">' +
