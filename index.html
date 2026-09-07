@@ -332,7 +332,7 @@
         .eta-group { 
             display: flex; 
             flex-direction: column;
-            gap: 3px; 
+            gap: 3.15px; 
             align-items: stretch; 
             width: 36%;
             margin-left: auto;
@@ -632,7 +632,7 @@
             .bus-origin-text { font-size: 1.6rem; }
             .bus-dest-text { font-size: 1.15rem; }
 
-            .eta-group { gap: 5px; width: 32%; }
+            .eta-group { gap: 5.25px; width: 32%; }
             .eta-next-group { gap: 6px; }
             .eta-badge { font-size: 1.27rem; padding: 6px; border-radius: 8px; }
             .eta-badge.first { font-size: 2.75rem; padding: 6px; border-radius: 10px; }
@@ -1208,11 +1208,6 @@
                     
                     var displayRoute = bus.route.toUpperCase();
 
-                    // 到站時間顯示邏輯：
-                    // <= 0 分鐘（將到站）：紅黃綠三色交替閃爍 (eta-flash-three)
-                    // 1 - 5 分鐘：紅黃交替閃爍 (eta-flash)
-                    // 6 - 10 分鐘：紅綠交替閃爍 (eta-flash-green)
-                    // > 10 分鐘：靜態綠色 (eta-green)
                     function getEtaClass(etaObj) {
                         if (etaObj.mins < 0) return '';
                         if (etaObj.mins === 0) return 'eta-flash-three';
