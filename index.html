@@ -226,12 +226,15 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* 路線卡片高度縮減約 10% (padding: 12px -> 10px 12px, gap: 10px -> 8px) */
         .bus-item {
             border-radius: 12px;
-            padding: 12px;
+            padding: 10px 12px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
             width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
@@ -245,7 +248,15 @@
         .card-ctb .bus-dest { color: #1e293b; text-shadow: none; }
         .card-ctb .bus-origin-text { color: #000000; }
 
-        .bus-header { display: flex; justify-content: space-between; align-items: center; }
+        /* 左側佈局改為垂直排列：路線號在上，起終點在下 */
+        .bus-header { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+            justify-content: center;
+            gap: 2px;
+            flex: 1;
+        }
         .bus-title-group { display: flex; align-items: center; gap: 8px; }
         
         .bus-company-tag { 
@@ -267,25 +278,33 @@
         /* 路線號碼字體大小 (4.82rem) */
         .bus-name { font-size: 4.82rem; font-weight: 700; letter-spacing: 2px; line-height: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
+        /* 起點在上、終點在下，直向堆疊 */
         .bus-dest { 
             font-size: 0.85rem; 
             font-weight: 500; 
-            text-align: right; 
+            text-align: left; 
             display: flex;
-            align-items: baseline;
-            justify-content: flex-end;
-            gap: 4px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
             color: #f1f5f9;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            margin-top: 2px;
         }
-        .bus-origin-text { font-size: 1.15rem; font-weight: 800; color: #ffffff; }
-        .bus-dest-text { font-size: 0.85rem; font-weight: 500; opacity: 0.95; }
+        .bus-route-arrow {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            line-height: 1;
+            margin: 1px 0;
+        }
+        .bus-origin-text { font-size: 1.15rem; font-weight: 800; color: #ffffff; line-height: 1.1; }
+        .bus-dest-text { font-size: 0.85rem; font-weight: 500; opacity: 0.95; line-height: 1.1; }
 
         .eta-group { 
             display: flex; 
             gap: 8px; 
             align-items: stretch; 
-            width: 60%;
+            width: 55%;
             margin-left: auto;
             margin-right: 0;
         }
@@ -530,15 +549,19 @@
             .panel-title { font-size: 1.4rem; margin-bottom: 20px; }
             .settings-btn { font-size: 1.1rem; padding: 10px 20px; }
             .bus-list { gap: 16px; padding-right: 8px; }
-            .bus-item { padding: 20px 24px; border-radius: 16px; gap: 16px; }
+            
+            /* 桌面版路線卡片高度縮減約 10% (padding: 20px 24px -> 18px 24px, gap: 16px -> 14px) */
+            .bus-item { padding: 18px 24px; border-radius: 16px; gap: 14px; }
             .bus-company-tag { font-size: 1rem; padding: 4px 10px; border-radius: 6px; }
             
             /* 桌面版路線號碼字體大小 (6.61rem) */
             .bus-name { font-size: 6.61rem; letter-spacing: 3px; }
             
-            .bus-dest { gap: 8px; }
+            .bus-dest { margin-top: 4px; gap: 2px; }
             .bus-origin-text { font-size: 1.8rem; }
             .bus-dest-text { font-size: 1.3rem; }
+            .bus-route-arrow { font-size: 1rem; }
+
             .eta-group { gap: 12px; }
             .eta-next-group { gap: 8px; }
             .eta-badge { font-size: 1.1rem; padding: 6px; border-radius: 8px; }
@@ -1103,9 +1126,16 @@
                         cardClass = 'card-ctb';
                     }
 
+                    /* 起點在上、終點在下排列結構 */
                     var originText = bus.origin_name ? '<span class="bus-origin-text">' + bus.origin_name + '</span>' : '';
                     var destText = bus.dest_name ? '<span class="bus-dest-text">' + bus.dest_name + '</span>' : '';
-                    var routeDirectionHtml = (originText && destText) ? originText + ' <span style="font-size: 0.8rem; opacity: 0.8;">➔</span> ' + destText : (originText || destText);
+                    
+                    var routeDirectionHtml = '';
+                    if (originText && destText) {
+                        routeDirectionHtml = originText + '<span class="bus-route-arrow">↓</span>' + destText;
+                    } else {
+                        routeDirectionHtml = originText || destText;
+                    }
 
                     var displayRoute = bus.route.toUpperCase();
 
@@ -1116,10 +1146,13 @@
                         return 'eta-green';
                     }
 
-                    /* 調整：巴士公司標籤 (companyTag) 移至路線號碼 (bus-name) 右側 */
+                    /* 起點與終點放到路線號碼 (bus-title-group) 下方 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header">' +
-                            '<div class="bus-title-group"><div class="bus-name">' + displayRoute + '</div>' + companyTag + '</div>' +
+                            '<div class="bus-title-group">' +
+                                '<div class="bus-name">' + displayRoute + '</div>' + 
+                                companyTag + 
+                            '</div>' +
                             '<div class="bus-dest">' + routeDirectionHtml + '</div>' +
                         '</div>' +
                         '<div class="eta-group">' +
