@@ -363,7 +363,6 @@
             justify-content: center;
             white-space: nowrap;
             
-            /* 調整字體：左右各縮減 1.5% (X軸 0.97)，高度增加 2% (Y軸 1.02) */
             transform: scale(0.97, 1.02);
             transform-origin: center center;
         }
@@ -371,7 +370,7 @@
         .eta-badge.first {
             width: 100%;
             background: rgba(15, 23, 42, 0.85);
-            font-size: 2.15rem;
+            font-size: 1.7rem;
             font-weight: 900;
             padding: 6px 1px;
         }
@@ -598,7 +597,7 @@
             .eta-group { gap: 5px; width: 32%; }
             .eta-next-group { gap: 6px; }
             .eta-badge { font-size: 1.15rem; padding: 6px; border-radius: 8px; }
-            .eta-badge.first { font-size: 3.15rem; padding: 6px; border-radius: 10px; }
+            .eta-badge.first { font-size: 2.5rem; padding: 6px; border-radius: 10px; }
             
             .modal-content { max-width: 800px; padding: 24px; gap: 16px; }
             .modal-title { font-size: 1.4rem; }
@@ -1128,12 +1127,24 @@
                         for (var j = 0; j < rawEtas.length; j++) {
                             var item = rawEtas[j];
                             if (!item || !item.eta) continue;
+                            
+                            // 計算時間差（秒）
                             var totalDiffSeconds = Math.round((new Date(item.eta) - now) / 1000) + (busOffset * 60);
-                            if (bus.company === 'kmb' || bus.company === 'lwb') totalDiffSeconds -= 60;
-                            if (totalDiffSeconds < 0) continue;
+                            
+                            // 過濾已經過站超過 15 秒的班次
+                            if (totalDiffSeconds < -15) continue;
                             
                             var mVal = Math.round(totalDiffSeconds / 60);
-                            etas.push({ text: mVal + ' 分鐘', mins: mVal });
+                            var displayText = '';
+                            
+                            // 少於或等於 0 分鐘顯示「將到站」
+                            if (mVal <= 0) {
+                                displayText = '將到站';
+                            } else {
+                                displayText = mVal + ' 分鐘';
+                            }
+                            
+                            etas.push({ text: displayText, mins: Math.max(0, mVal) });
                         }
                     }
 
