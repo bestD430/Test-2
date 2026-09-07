@@ -247,7 +247,6 @@
         .card-ctb .bus-dest { color: #1e293b; text-shadow: none; }
         .card-ctb .bus-origin-text { color: #000000; }
 
-        /* 使用 Grid 網格系統實現第一欄放標籤，第二欄放路線號與文字（自動對齊 E 字） */
         .bus-header-grid { 
             display: grid;
             grid-template-columns: auto 1fr;
@@ -294,7 +293,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.4); 
         }
 
-        /* 站名容器放置於第二欄，確保對齊路線號碼正下方（對齊 E 字） */
         .bus-dest { 
             grid-row: 2;
             grid-column: 2;
@@ -354,7 +352,7 @@
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(4px);
             border-radius: 6px;
-            padding: 4px 2px;
+            padding: 4px 0.5px;
             text-align: center;
             font-size: 0.88rem;
             font-weight: bold;
@@ -364,6 +362,10 @@
             align-items: center;
             justify-content: center;
             white-space: nowrap;
+            
+            /* 調整字體：左右各縮減 1.5% (X軸 0.97)，高度增加 2% (Y軸 1.02) */
+            transform: scale(0.97, 1.02);
+            transform-origin: center center;
         }
         
         .eta-badge.first {
@@ -371,7 +373,7 @@
             background: rgba(15, 23, 42, 0.85);
             font-size: 2.15rem;
             font-weight: 900;
-            padding: 6px 3px;
+            padding: 6px 1px;
         }
 
         .eta-badge.eta-green {
@@ -1167,7 +1169,6 @@
                         return 'eta-green';
                     }
 
-                    /* 採用更精準的 Grid 佈局，起點/目的地放在第二欄，確保完全與路線號碼（E字）左對齊 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header-grid">' +
                             companyTag + 
