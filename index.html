@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -343,7 +342,7 @@
         .eta-badge.first {
             width: 100%;
             background: rgba(15, 23, 42, 0.85);
-            font-size: 1.95rem; /* 字體加大 20% (原 1.62rem) */
+            font-size: 1.95rem;
             font-weight: 900;
             padding: 3px;
         }
@@ -569,7 +568,7 @@
             .eta-group { gap: 5px; width: 40%; }
             .eta-next-group { gap: 6px; }
             .eta-badge { font-size: 1.05rem; padding: 4px; border-radius: 8px; }
-            .eta-badge.first { font-size: 2.88rem; padding: 4px; border-radius: 10px; } /* 字體加大 20% (原 2.4rem) */
+            .eta-badge.first { font-size: 2.88rem; padding: 4px; border-radius: 10px; }
             
             .modal-content { max-width: 800px; padding: 24px; gap: 16px; }
             .modal-title { font-size: 1.4rem; }
@@ -1103,14 +1102,13 @@
                             if (bus.company === 'kmb' || bus.company === 'lwb') totalDiffSeconds -= 60;
                             if (totalDiffSeconds < 0) continue;
                             
-                            // 即使倒數至 1 分鐘，仍然顯示時間（分鐘數），取消顯示「將近到站」
                             var mVal = Math.round(totalDiffSeconds / 60);
                             etas.push({ text: mVal + ' 分鐘', mins: mVal });
                         }
                     }
 
                     if (etas.length === 0) {
-                        etas = [{ text: '暫無班次', mins: -1 }, { text: '-', mins: -1 }, { text: '-', mins: -1 }];
+                        etas = [{ text: '無班次', mins: -1 }, { text: '-', mins: -1 }, { text: '-', mins: -1 }];
                     } else {
                         while (etas.length < 3) { etas.push({ text: '-', mins: -1 }); }
                     }
