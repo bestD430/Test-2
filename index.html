@@ -228,7 +228,7 @@
 
         .bus-item {
             border-radius: 10px;
-            padding: 6px 10px;
+            padding: 8px 10px;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -252,8 +252,9 @@
             flex-direction: column; 
             align-items: flex-start; 
             justify-content: center;
-            gap: 2px;
+            gap: 4px;
             flex: 1;
+            overflow: hidden;
         }
         
         .bus-title-group { 
@@ -278,6 +279,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             letter-spacing: 1px;
             line-height: 1;
+            flex-shrink: 0;
         }
 
         .card-kmb .bus-company-tag { color: #ffffff; background: #d8121a; border-color: #ffffff; }
@@ -286,24 +288,41 @@
 
         .bus-name { font-size: 3.8rem; font-weight: 700; letter-spacing: 1px; line-height: 0.95; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
+        /* 調整站名容器：直接置於路線名稱正下方 */
         .bus-dest { 
-            font-size: 0.8rem; 
-            font-weight: 500; 
-            text-align: left; 
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 1px;
+            gap: 2px;
             color: #f1f5f9;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            margin-top: 2px;
-            line-height: 1.2;
             width: 100%;
         }
-        .bus-origin-text { font-size: 1.05rem; font-weight: 800; color: #ffffff; line-height: 1.2; text-align: left; }
-        .bus-dest-text { font-size: 0.8rem; font-weight: 500; opacity: 0.95; line-height: 1.2; text-align: left; }
+        
+        .bus-origin-text { 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            color: #ffffff; 
+            line-height: 1.2; 
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        
+        .bus-dest-text { 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            opacity: 0.95; 
+            line-height: 1.2; 
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
 
-        /* 修改：寬度減少10% (從 45% 改為 36%) */
         .eta-group { 
             display: flex; 
             flex-direction: column;
@@ -312,6 +331,7 @@
             width: 36%;
             margin-left: auto;
             margin-right: 0;
+            flex-shrink: 0;
         }
 
         .eta-next-group {
@@ -321,7 +341,6 @@
             width: 100%;
         }
 
-        /* 修改：高度與字體增加10% */
         .eta-badge {
             flex: 1;
             background: rgba(15, 23, 42, 0.85);
@@ -556,16 +575,15 @@
             .settings-btn { font-size: 1.1rem; padding: 10px 20px; }
             .bus-list { gap: 12px; padding-right: 8px; }
             
-            .bus-item { padding: 8px 16px; border-radius: 14px; gap: 12px; }
+            .bus-item { padding: 10px 16px; border-radius: 14px; gap: 12px; }
             .bus-company-tag { font-size: 0.85rem; padding: 4px 3px; border-radius: 5px; }
             
             .bus-name { font-size: 5rem; letter-spacing: 2px; }
             
-            .bus-dest { margin-top: 2px; gap: 2px; line-height: 1.2; }
-            .bus-origin-text { font-size: 1.6rem; line-height: 1.2; }
-            .bus-dest-text { font-size: 1.15rem; line-height: 1.2; }
+            .bus-dest { gap: 3px; }
+            .bus-origin-text { font-size: 1.6rem; }
+            .bus-dest-text { font-size: 1.15rem; }
 
-            /* 大螢幕適配：寬度改為 32%，高度與字型增加10% */
             .eta-group { gap: 5px; width: 32%; }
             .eta-next-group { gap: 6px; }
             .eta-badge { font-size: 1.15rem; padding: 6px; border-radius: 8px; }
@@ -966,8 +984,8 @@
         setInterval(fetchGovPressRelease, 60000);
 
         var defaultBuses = [
-            { company: "lwb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "東涌", dest_name: "往 元朗", offset: 0 },
-            { company: "ctb", route: "E33", dir: "outbound", stop: "001854", origin_name: "屯門", dest_name: "往 機場/東涌", offset: 0 }
+            { company: "lwb", route: "E36A", dir: "inbound", stop: "TC188", origin_name: "逸東邨雍逸樓", dest_name: "往 元朗(德業街)", offset: 0 },
+            { company: "ctb", route: "E21B", dir: "outbound", stop: "001854", origin_name: "逸東邨雍逸樓, 裕東路", dest_name: "往 何文田 (愛民邨)", offset: 0 }
         ];
 
         var currentBuses = [];
@@ -1131,7 +1149,6 @@
                     var originText = bus.origin_name ? '<span class="bus-origin-text">' + bus.origin_name + '</span>' : '';
                     var destText = bus.dest_name ? '<span class="bus-dest-text">' + bus.dest_name + '</span>' : '';
                     
-                    var routeDirectionHtml = originText + destText;
                     var displayRoute = bus.route.toUpperCase();
 
                     function getEtaClass(etaObj) {
@@ -1141,13 +1158,17 @@
                         return 'eta-green';
                     }
 
+                    /* 結構調整：起點與目的地放於 bus-dest 中，直接置於路線名稱正下方 */
                     busResults[index] = '<div class="bus-item ' + cardClass + '">' +
                         '<div class="bus-header">' +
                             '<div class="bus-title-group">' +
                                 companyTag + 
                                 '<div class="bus-name">' + displayRoute + '</div>' + 
                             '</div>' +
-                            '<div class="bus-dest">' + routeDirectionHtml + '</div>' +
+                            '<div class="bus-dest">' + 
+                                originText + 
+                                destText + 
+                            '</div>' +
                         '</div>' +
                         '<div class="eta-group">' +
                             '<div class="eta-badge first ' + getEtaClass(etas[0]) + '">' + etas[0].text + '</div>' +
