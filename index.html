@@ -243,7 +243,7 @@
         .card-kmb { background-color: #d8121a; }
         .card-lwb { background-color: #f37021; }
         .card-ctb { background-color: #ffcc00; color: #000000; border: 1px solid rgba(0, 0, 0, 0.1); }
-        .card-nlb { background-color: #007260; } /* 嶼巴綠色 */
+        .card-nlb { background-color: #007260; }
         
         .card-ctb .bus-name { color: #000000; text-shadow: none; }
         .card-ctb .bus-dest { color: #1e293b; text-shadow: none; }
@@ -495,7 +495,6 @@
 </head>
 <body>
 
-    <!-- 夜間模式畫面 -->
     <div id="night-screen" onclick="wakeUpNightScreen()">
         <div id="night-clock" class="night-clock">
             12:00
@@ -519,7 +518,6 @@
         <div class="night-tip">輕按一下顯示路線資料</div>
     </div>
 
-    <!-- 主頁面 Header 區域 -->
     <header>
         <div class="header-left">
             <div class="weather-sub-bar">
@@ -562,7 +560,6 @@
         </section>
     </main>
 
-    <!-- 設定彈窗 -->
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -887,7 +884,6 @@
                     var parsed = JSON.parse(saved);
                     currentBuses = [];
                     for (var i = 0; i < parsed.length; i++) {
-                        // 修正：不再過濾掉 nlb (新大嶼山巴士)
                         if (parsed[i].company !== 'mtr') {
                             currentBuses.push(parsed[i]);
                         }
@@ -955,7 +951,7 @@
             }
         }
 
-        // 新增大嶼山巴士 ETA 抓取
+        // 修正：強化 NLB ETA 的時間格式保護與備用欄位抓取
         function getNLBETA(routeId, stopId, callback) {
             if (!routeId || !stopId) { callback([]); return; }
             fetch('https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=eta&routeId=' + routeId + '&stopId=' + stopId + '&language=zh')
@@ -964,9 +960,21 @@
                     var list = [];
                     var data = etaData.estimatedArrivals || [];
                     for (var i = 0; i < data.length; i++) {
-                        if (data[i].estimatedArrivalTime) {
-                            // 轉換格式以支援 iOS Safari
-                            var timeStr = data[i].estimatedArrivalTime.replace(' ', 'T') + '+08:00';
+                        // 如果沒有 estimatedArrivalTime，嘗試使用 scheduledArrivalTime
+                        var arrivalTime = data[i].estimatedArrivalTime || data[i].scheduledArrivalTime;
+                        if (arrivalTime) {
+                            var timeStr = arrivalTime;
+                            
+                            // 確保時間格式支援 iOS Safari
+                            // 1. 如果沒有 T，則替換空格為 T
+                            if (timeStr.indexOf('T') === -1) {
+                                timeStr = timeStr.replace(' ', 'T');
+                            }
+                            // 2. 如果沒有包含時區標示 (+08:00 或 Z)，則補上 +08:00
+                            if (timeStr.indexOf('+') === -1 && timeStr.indexOf('Z') === -1) {
+                                timeStr += '+08:00';
+                            }
+                            
                             list.push({ eta: timeStr });
                         }
                     }
@@ -985,7 +993,6 @@
                 return;
             }
 
-            // 加入 nlb 的排序權重
             var companyOrder = { kmb: 1, lwb: 2, ctb: 3, nlb: 4 };
             currentBuses.sort(function(a, b) {
                 var oA = companyOrder[a.company] || 99;
@@ -1108,7 +1115,7 @@
                 } else if (bus.company === 'ctb') {
                     getCTBETA(bus.route, bus.stop, busDir, processEtas);
                 } else if (bus.company === 'nlb') {
-                    getNLBETA(busDir, bus.stop, processEtas); // NLB 的 busDir 儲存的是 routeId
+                    getNLBETA(busDir, bus.stop, processEtas);
                 } else {
                     processEtas([]);
                 }
@@ -1222,7 +1229,6 @@
             var selectedOpt = dirSelect.options[dirSelect.selectedIndex];
             var destInput = item.querySelector('.bus-dest');
             if (selectedOpt && selectedOpt.text) {
-                // 移除嶼巴選項中括號內的路徑描述，只保留目的地
                 var destClean = selectedOpt.text.replace(/ \(.+\)$/, '');
                 destInput.value = destClean;
             }
@@ -1290,16 +1296,18 @@
                         finalizeDir(dirSelect, item, currentDir, isUserAction, destInput, callback);
                     });
             } else if (company === 'nlb') {
-                // 新增大嶼山巴士路線搜尋
                 fetch('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list')
                     .then(function(res) { return res.json(); })
                     .then(function(data) {
                         var html = '';
                         if (data && data.routes) {
-                            var matches = data.routes.filter(function(r) { return r.routeNo.toUpperCase() === route; });
+                            // 修正：去掉 API 回傳的 routeNo 可能含有的空格，保證和用戶輸入的路線正確比對
+                            var matches = data.routes.filter(function(r) { 
+                                return r.routeNo && r.routeNo.trim().toUpperCase() === route; 
+                            });
                             if (matches.length > 0) {
                                 matches.forEach(function(m) {
-                                    var destName = m.routeName_c; // e.g., "東涌站 > 大澳"
+                                    var destName = m.routeName_c;
                                     var shortDest = destName.split('>').pop().trim();
                                     html += '<option value="' + m.routeId + '">往 ' + shortDest + ' (' + destName + ')</option>';
                                 });
@@ -1320,8 +1328,7 @@
         }
 
         function finalizeDir(dirSelect, item, currentDir, isUserAction, destInput, callback) {
-            // 嘗試設定成已儲存的方向 (若存在的話)
-            var hasMatch = Array.from(dirSelect.options).some(opt => opt.value === currentDir);
+            var hasMatch = Array.from(dirSelect.options).some(function(opt) { return opt.value === currentDir; });
             
             if (!isUserAction && currentDir && hasMatch) {
                 dirSelect.value = currentDir;
@@ -1440,7 +1447,6 @@
                             stopSelect.innerHTML = '<option value="">載入失敗</option>';
                         });
                 } else if (company === 'nlb') {
-                    // 新增大嶼山巴士車站載入 (NLB 的方向 dir 實際上存的是 routeId)
                     var nlbRouteId = dir; 
                     if (!nlbRouteId || nlbRouteId === 'outbound' || nlbRouteId === 'inbound') {
                         stopSelect.innerHTML = '<option value="">請重新選擇方向</option>';
