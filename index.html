@@ -554,7 +554,7 @@ var cachedRawEtas = {};
 var nlbRouteCache = null;
 
 /* =========================================================
-   香港天文台 天氣 API (包含天氣 Icon 自動修正補零邏輯)
+   香港天文台 天氣 API (已修正天氣 Icon 路徑)
    ========================================================= */
 function fetchWeatherData() {
     var weatherUrl = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc';
@@ -575,12 +575,16 @@ function fetchWeatherData() {
                     var humVal = data.humidity.data[0].value;
                     document.getElementById('weather-humidity').innerText = '濕度 ' + humVal + '%';
                 }
-                // 天氣圖示 (自動補零至3位數，例如 50 -> 050，修復 404 圖片遺失問題)
+                // 天氣圖示（已修正路徑，不再補零，使用官方 wxicon）
                 if (data.icon && data.icon.length > 0) {
-                    var iconCode = String(data.icon[0]).padStart(3, '0');
+                    var iconCode = String(data.icon[0]); // 不補零，例如 50、60、63
                     var iconImg = document.getElementById('weather-icon');
-                    iconImg.src = 'https://www.hko.gov.hk/images/HKOWeatherIcon/pic' + iconCode + '.png';
+                    iconImg.src = 'https://www.hko.gov.hk/images/wxicon/pic' + iconCode + '.png';
                     iconImg.style.display = 'block';
+                    iconImg.onerror = function() {
+                        // 萬一圖示載入失敗就隱藏，避免破圖
+                        this.style.display = 'none';
+                    };
                 }
             }
         })
