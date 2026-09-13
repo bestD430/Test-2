@@ -23,7 +23,7 @@
     }
     header {
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
         align-items: center;
         padding-bottom: 10px;
         border-bottom: 1px solid #334155;
@@ -31,6 +31,54 @@
         flex-shrink: 0;
         gap: 10px;
     }
+
+    /* 時鐘左側天氣模組樣式 */
+    .weather-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .weather-current {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #38bdf8;
+    }
+    .weather-temp {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffffff;
+    }
+    .weather-humidity {
+        font-size: 0.9rem;
+        color: #94a3b8;
+    }
+    .weather-warning {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+        min-height: 24px;
+    }
+    .warning-badge {
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid #f87171;
+        white-space: nowrap;
+    }
+    .warning-none {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
     .header-right {
         display: flex;
         flex-direction: column;
@@ -372,6 +420,10 @@
     @media (min-width: 768px) {
         body { padding: 24px; gap: 8px; }
         header { padding-bottom: 16px; border-bottom: 2px solid #334155; }
+        .weather-current { font-size: 1.3rem; }
+        .weather-temp { font-size: 2rem; }
+        .weather-humidity { font-size: 1.1rem; }
+        .warning-badge { font-size: 0.85rem; padding: 3px 8px; }
         #clock { font-size: 48px; letter-spacing: 4px; }
         #date, .night-date { font-size: 1.2rem; }
         .school-notice { font-size: 1.95rem; padding: 16px; border-radius: 16px; margin-bottom: 16px; }
@@ -421,6 +473,20 @@
 
 <!-- Header -->
 <header>
+    <!-- 左側天氣資訊 -->
+    <div class="weather-container">
+        <!-- 上方：現時天氣 -->
+        <div class="weather-current" id="weather-current">
+            <span class="weather-temp" id="weather-temp">--°C</span>
+            <span class="weather-humidity" id="weather-humidity">相對濕度: --%</span>
+        </div>
+        <!-- 下方：天氣警告 -->
+        <div class="weather-warning" id="weather-warning">
+            <span class="warning-none">載入天氣資料中...</span>
+        </div>
+    </div>
+
+    <!-- 右側時鐘區域 -->
     <div class="header-right">
         <div class="clock-container">
             <div id="clock">
@@ -483,6 +549,61 @@ var isManuallyWoken = false;
 var currentBuses = [];
 var cachedRawEtas = {};
 var nlbRouteCache = null;
+
+/* =========================================================
+   天氣資訊 (香港天文台 API)
+   ========================================================= */
+function fetchWeather() {
+    // 取得實時氣溫及濕度
+    fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.temperature && data.temperature.data && data.temperature.data.length > 0) {
+                // 取總區/天文台氣溫或第一個數據
+                var tempObj = data.temperature.data.find(function(item) { return item.place === '香港天文台'; }) || data.temperature.data[0];
+                document.getElementById('weather-temp').innerText = tempObj.value + '°C';
+            }
+            if (data.humidity && data.humidity.data && data.humidity.data.length > 0) {
+                document.getElementById('weather-humidity').innerText = '濕度 ' + data.humidity.data[0].value + '%';
+            }
+        })
+        .catch(function(e) {
+            document.getElementById('weather-temp').innerText = '--°C';
+        });
+
+    // 取得天氣警告
+    fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            var warningContainer = document.getElementById('weather-warning');
+            var warnings = [];
+
+            if (data && Object.keys(data).length > 0) {
+                for (var key in data) {
+                    if (data[key] && data[key].name) {
+                        warnings.push(data[key].name);
+                    }
+                }
+            }
+
+            if (warnings.length > 0) {
+                var html = '';
+                for (var i = 0; i < warnings.length; i++) {
+                    html += '<span class="warning-badge">' + escapeHtml(warnings[i]) + '</span>';
+                }
+                warningContainer.innerHTML = html;
+            } else {
+                warningContainer.innerHTML = '<span class="warning-none">現時無天氣警告</span>';
+            }
+        })
+        .catch(function(e) {
+            document.getElementById('weather-warning').innerHTML = '<span class="warning-none">無天氣警告</span>';
+        });
+}
+
+// 初始化天氣與定時更新 (每 5 分鐘更新一次)
+fetchWeather();
+setInterval(fetchWeather, 300000);
 
 /* =========================================================
    KMB 車站名稱
